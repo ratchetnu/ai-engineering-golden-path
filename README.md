@@ -1,5 +1,7 @@
 # ai-engineering-golden-path
 
+[![CI](https://github.com/ratchetnu/ai-engineering-golden-path/actions/workflows/ci.yml/badge.svg)](https://github.com/ratchetnu/ai-engineering-golden-path/actions/workflows/ci.yml)
+
 A small reference repository that shows one way to deliver software safely when
 some of the code is written by an AI assistant.
 

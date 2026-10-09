@@ -1,0 +1,129 @@
+# CI: the automated gates every change must pass before a human reviews it.
+#
+# Each gate is its own job so the pull request page shows a readable checklist:
+#   Gate 1 · Lint   Gate 2 · Typecheck   Gate 3 · Architecture   ...
+# The final "CI result" job is the single check that branch protection requires.
+#
+# This workflow never merges and never deploys.
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: "Gate 1 · Lint"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Lint (ESLint, type-aware rules)
+        run: npm run lint
+
+  typecheck:
+    name: "Gate 2 · Typecheck (strict)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: TypeScript strict typecheck
+        run: npm run typecheck
+
+  architecture:
+    name: "Gate 3 · Architecture rules"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Check layer boundaries and storage access
+        run: npm run check:architecture
+      - name: Run architecture fitness-function tests
+        run: npm run test:architecture
+
+  policy:
+    name: "Gate 4 · Dependency policy & secret scan"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Dependency policy (allow list, pinned versions, licenses)
+        run: npm run check:dependencies
+      - name: Secret scan
+        run: npm run check:secrets
+
+  test:
+    name: "Gate 5 · Tests (unit, regression, architecture, tooling)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Run all tests
+        run: npm test
+
+  build:
+    name: "Gate 6 · Build & verify output"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Compile TypeScript to dist/
+        run: npm run build
+      - name: Verify build output (contents + smoke test)
+        run: npm run verify:build
+
+  result:
+    name: "CI result"
+    if: always()
+    needs: [lint, typecheck, architecture, policy, test, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Summarize gate results
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          node --input-type=module -e '
+            const results = JSON.parse(process.env.RESULTS);
+            const names = {
+              lint: "Gate 1 · Lint",
+              typecheck: "Gate 2 · Typecheck (strict)",
+              architecture: "Gate 3 · Architecture rules",
+              policy: "Gate 4 · Dependency policy & secret scan",
+              test: "Gate 5 · Tests",
+              build: "Gate 6 · Build & verify output",
+            };
+            const icon = { success: "✅ passed", failure: "❌ failed", cancelled: "⚪ cancelled", skipped: "⚪ skipped" };
+            const rows = Object.entries(results).map(([job, r]) => `| ${names[job] ?? job} | ${icon[r.result] ?? r.result} |`);
+            const ok = Object.values(results).every((r) => r.result === "success");
+            const summary = [
+              "## CI result",
+              "",
+              "| Gate | Result |",
+              "| --- | --- |",
+              ...rows,
+              "",
+              ok
+                ? "**All automated gates passed.** The change is ready for human review. Merging still requires an approving review."
+                : "**At least one gate failed.** Open the failed job above to see what broke and how to fix it.",
+            ].join("\n");
+            const fs = await import("node:fs");
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary + "\n");
+            console.log(summary);
+            if (!ok) process.exit(1);
+          '

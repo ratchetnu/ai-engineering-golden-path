@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+release/
+.tasks.json
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store

@@ -1,0 +1,35 @@
+# PR validation: checks that the pull request itself is reviewable
+# (conventional title, filled-in template, AI-assistance disclosure,
+# justification when guardrail files change).
+
+name: PR validation
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: "PR description & title"
+    # Dependabot PRs have generated descriptions. They still go through every
+    # CI gate and need a human approval; only the template check is skipped.
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+      - name: Validate pull request
+        # Untrusted PR text is passed through environment variables,
+        # never interpolated into the shell script.
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: npm run check:pr

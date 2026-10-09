@@ -1,0 +1,25 @@
+{
+  "$comment": "Which third-party packages this repository may use. Changes need maintainer review (see .github/CODEOWNERS).",
+  "dependencies": {
+    "allowed": []
+  },
+  "devDependencies": {
+    "allowed": ["@eslint/js", "@types/node", "eslint", "typescript", "typescript-eslint", "vitest"]
+  },
+  "requireExactVersions": true,
+  "allowedLicenses": [
+    "0BSD",
+    "Apache-2.0",
+    "BlueOak-1.0.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "CC0-1.0",
+    "ISC",
+    "MIT"
+  ],
+  "devOnlyLicenses": {
+    "$comment": "Allowed for build and test tools that are never shipped in the release artifact.",
+    "licenses": ["MPL-2.0"]
+  },
+  "deniedPackages": ["event-stream", "flatmap-stream", "request"]
+}

@@ -1,0 +1,14 @@
+# Code owners are asked for review automatically, and branch protection can
+# require their approval.
+
+# Default reviewer for everything.
+*                         @ratchetnu
+
+# The guardrails. Changing these changes the rules for every contributor,
+# so they need an owner's approval even when the rest of the PR is trivial.
+/tools/                   @ratchetnu
+/policy/                  @ratchetnu
+/.github/                 @ratchetnu
+/eslint.config.js         @ratchetnu
+/tsconfig*.json           @ratchetnu
+/vitest.config.ts         @ratchetnu

@@ -1,0 +1,37 @@
+{
+  "name": "ai-engineering-golden-path",
+  "version": "0.1.0",
+  "description": "Reference implementation of a controlled delivery path for AI-assisted code changes.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "bin": {
+    "tasks": "dist/main.js"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:architecture": "vitest run tests/architecture",
+    "check:architecture": "node tools/architecture/cli.ts",
+    "check:dependencies": "node tools/dependency-policy/cli.ts",
+    "check:secrets": "node tools/secret-scan/cli.ts",
+    "check:pr": "node tools/pr-validation/cli.ts",
+    "build": "node tools/build-verification/clean.ts && tsc -p tsconfig.build.json",
+    "verify:build": "node tools/build-verification/cli.ts",
+    "verify": "npm run lint && npm run typecheck && npm run check:architecture && npm run check:dependencies && npm run check:secrets && npm test && npm run build && npm run verify:build",
+    "release:check": "node tools/release-readiness/cli.ts",
+    "demo:ai-violation": "node tools/architecture/cli.ts --root tests/fixtures/ai-generated-violation"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "22.20.5",
+    "eslint": "10.12.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.1",
+    "vitest": "5.0.3"
+  }
+}

@@ -1,0 +1,43 @@
+# Release readiness: run by a person, on demand, against main.
+#
+# It re-runs every gate, checks release prerequisites, and uploads a
+# deployment-READY artifact with a manifest of checksums.
+#
+# It deliberately does NOT deploy. Promotion to an environment is a separate,
+# human-approved step (for example a GitHub Environment with required
+# reviewers) that belongs to whoever operates production.
+
+name: Release readiness
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  readiness:
+    name: "Release readiness check"
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+      - name: Run every gate (lint, types, architecture, policy, secrets, tests, build)
+        run: npm run verify
+      - name: Check release prerequisites and write manifest
+        run: npm run release:check
+      - name: Upload deployment-ready artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ github.sha }}
+          path: |
+            dist/
+            release/release-manifest.json
+            package.json
+            package-lock.json
+          if-no-files-found: error
+          retention-days: 30

@@ -9,6 +9,14 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: build
+    ignore:
+      # TypeScript majors need a deliberate migration: typescript-eslint and the
+      # architecture checker (tools/architecture) depend on the compiler API.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      # Node type definitions must match the Node version in .nvmrc (22).
+      - dependency-name: "@types/node"
+        versions: [">=23"]
   - package-ecosystem: github-actions
     directory: /
     schedule:

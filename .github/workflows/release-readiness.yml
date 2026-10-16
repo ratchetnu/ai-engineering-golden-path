@@ -31,7 +31,7 @@ jobs:
       - name: Check release prerequisites and write manifest
         run: npm run release:check
       - name: Upload deployment-ready artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: release-${{ github.sha }}
           path: |
